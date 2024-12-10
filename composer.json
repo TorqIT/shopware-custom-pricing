@@ -1,0 +1,27 @@
+{
+    "name": "torq/torqcommon",
+    "description": "torq/torqcommon",
+    "type": "shopware-platform-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "require": {
+        "shopware/core": "~6.6.0"
+    },
+    "extra": {
+        "shopware-plugin-class": "Torq\\TorqCommon",
+        "label": {
+            "de-DE": "Torq Common",
+            "en-GB": "Torq Common"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Torq\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Torq\\Tests\\": "tests/"
+        }
+    }
+}
