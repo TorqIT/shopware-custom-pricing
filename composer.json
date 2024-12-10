@@ -1,6 +1,6 @@
 {
-    "name": "torq/torqcommon",
-    "description": "torq/torqcommon",
+    "name": "torq/torqcustompricingextension",
+    "description": "torq/torqcustompricingextension",
     "type": "shopware-platform-plugin",
     "version": "1.0.0",
     "license": "MIT",
@@ -8,20 +8,20 @@
         "shopware/core": "~6.6.0"
     },
     "extra": {
-        "shopware-plugin-class": "Torq\\TorqCommon",
+        "shopware-plugin-class": "Torq\\TorqCustomPricingExtension",
         "label": {
-            "de-DE": "Torq Common",
-            "en-GB": "Torq Common"
+            "de-DE": "",
+            "en-GB": ""
         }
     },
     "autoload": {
         "psr-4": {
-            "Torq\\": "src/"
+            "TorqCustomPricingExtension\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Torq\\Tests\\": "tests/"
+            "TorqCustomPricingExtension\\Tests\\": "tests/"
         }
     }
 }
