@@ -1,6 +1,6 @@
 {
-    "name": "torq/torqcustompricingextension",
-    "description": "torq/torqcustompricingextension",
+    "name": "torq/custompricing",
+    "description": "torq/custompricing",
     "type": "shopware-platform-plugin",
     "version": "1.0.0",
     "license": "MIT",
@@ -8,7 +8,7 @@
         "shopware/core": "~6.6.0"
     },
     "extra": {
-        "shopware-plugin-class": "TorqCustomPricingExtension\\TorqCustomPricingExtension",
+        "shopware-plugin-class": "Torq\\CustomPricing",
         "label": {
             "de-DE": "",
             "en-GB": ""
@@ -16,12 +16,12 @@
     },
     "autoload": {
         "psr-4": {
-            "TorqCustomPricingExtension\\": "src/"
+            "Torq\\CustomPricingExtension\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "TorqCustomPricingExtension\\Tests\\": "tests/"
+            "CustomPricing\\Tests\\": "tests/"
         }
     }
 }
