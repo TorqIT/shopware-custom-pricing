@@ -1,6 +1,6 @@
 {
-    "name": "torq/shopwarecustompricing",
-    "description": "torq/shopwarecustompricing",
+    "name": "torq/custompricing",
+    "description": "torq/custompricing",
     "type": "shopware-platform-plugin",
     "version": "1.0.0",
     "license": "MIT",
@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Torq\\Shopware\\CustomPricing": "src/"
+            "Torq\\Shopware\\CustomPricing\\": "src/"
         }
     },
     "autoload-dev": {

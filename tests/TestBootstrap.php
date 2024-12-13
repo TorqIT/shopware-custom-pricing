@@ -4,7 +4,7 @@ use Shopware\Core\TestBootstrapper;
 
 $loader = (new TestBootstrapper())
     ->addCallingPlugin()
-    ->addActivePlugins('CustomPricing')
+    ->addActivePlugins('TorqCustomPricing')
     ->setForceInstallPlugins(true)
     ->bootstrap()
     ->getClassLoader();
