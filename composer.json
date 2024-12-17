@@ -8,10 +8,10 @@
         "shopware/core": "~6.6.0"
     },
     "extra": {
-        "shopware-plugin-class": "Torq\\Shopware\\CustomPricing",
+        "shopware-plugin-class": "Torq\\Shopware\\CustomPricing\\TorqCustomPricing",
         "label": {
-            "de-DE": "Custom Pricing",
-            "en-GB": "Custom Pricing"
+            "de-DE": "Torq Custom Pricing",
+            "en-GB": "Torq Custom Pricing"
         }
     },
     "autoload": {
