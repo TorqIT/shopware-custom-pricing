@@ -5,17 +5,9 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
-        <!-- API Wrapper Service -->
-        <service id="Torq\Shopware\CustomPricing\Service\CascadeApiWrapper">
-            <argument type="service" id="Symfony\Contracts\HttpClient\HttpClientInterface"/>
-            <argument type="service" id="logger"/>
-            <argument>%env(CASCADE_API_USERNAME)%</argument>
-            <argument>%env(CASCADE_API_PASSWORD)%</argument>
-        </service>
 
         <!-- External Price API Service -->
         <service id="Torq\Shopware\CustomPricing\Service\ExternalPriceApiService">
-            <argument type="service" id="Torq\Shopware\CustomPricing\Service\CascadeApiWrapper"/>
         </service>
 
         <!-- Custom Price Collector Decorator -->
