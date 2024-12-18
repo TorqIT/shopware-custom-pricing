@@ -2,12 +2,24 @@
 
 namespace Torq\Shopware\CustomPricing\Service;
 
-class ExternalPriceApiService implements CustomPriceProvider
+use Torq\Shopware\CustomPricing\Service\CustomPriceProvider;
+
+class ExternalPriceApiService implements CustomPriceProvider 
 {
-    public function __construct() {}
+    protected string $apiUrl;
+    protected string $apiUsername;
+    protected string $apiPassword;
+
+    public function __construct(string $apiUrl = '', string $apiUsername = '', string $apiPassword = '')
+    {
+        $this->apiUrl = $apiUrl;
+        $this->apiUsername = $apiUsername;
+        $this->apiPassword = $apiPassword;
+    }
 
     public function getCustomPrice(string $customerId, string $customerGroupId, array $productIds): ?array
     {
-        return [];
+        // Implement generic API calling logic here
+        return null;
     }
 }
