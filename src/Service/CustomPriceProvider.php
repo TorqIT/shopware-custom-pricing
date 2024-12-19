@@ -2,8 +2,19 @@
 
 namespace Torq\Shopware\CustomPricing\Service;
 
-interface CustomPriceProvider
+use Torq\Shopware\CustomPricing\Model\CustomPrice;
+
+class CustomPriceProvider
 {
-    public function getCustomPrice(string $customerId, string $customerGroupId, array $productIds): ?array;
-    
+    private AbstractCustomPriceApiService $apiService;
+
+    public function __construct(AbstractCustomPriceApiService $apiService)
+    {
+        $this->apiService = $apiService;
+    }
+
+    public function getCustomPrice(string $productId): ?CustomPrice
+    {
+        return $this->apiService->fetchPrice($productId);
+    }
 }
