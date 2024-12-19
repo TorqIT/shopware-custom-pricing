@@ -5,7 +5,8 @@
     "version": "0.1.0",
     "license": "MIT",
     "require": {
-        "shopware/core": "~6.6.0"
+        "shopware/core": "~6.6.0",
+        "torq/shopwarecommon": "^1.1.0"
     },
     "extra": {
         "shopware-plugin-class": "Torq\\Shopware\\CustomPricing\\TorqCustomPricing",

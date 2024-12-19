@@ -38,7 +38,7 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
 
         $priceValue = $this->customPriceProvider->getCustomPrice("customerId", "customerGroupId", [$productId]);
 
-        $priceCollection->add(new Price("b7d2554b0ce847cd82f3ac9bd1c0dfca", $priceValue[$productId], $priceValue[$productId], false, null, null));
+        $priceCollection->add(new Price("b7d2554b0ce847cd82f3ac9bd1c0dfca", $priceValue->getPrice(), $priceValue->getPrice(), false, null, null));
 
         $start = 1;
         $end = 100;
