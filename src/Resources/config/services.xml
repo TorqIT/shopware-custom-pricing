@@ -5,8 +5,18 @@
            http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        
         <service id="Torq\Shopware\CustomPricing\Service\CustomPriceProvider">
             <argument type="service" id="Torq\Shopware\CustomPricing\Service\AbstractCustomPriceApiService" />
         </service>
+        
+        <service id="Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator" 
+                 decorates="Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector">
+            <argument type="service" id=".inner"/>
+            <argument type="service" id="Torq\Shopware\CustomPricing\Service\CustomPriceProvider"/>
+        </service>
+
+        
+
     </services>
 </container>
