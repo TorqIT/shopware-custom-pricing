@@ -22,44 +22,9 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         
         $prices =  $this->decorated->collect($customer, $products);
 
-        $newPrices = [];
-        foreach($products as $product){
-            $newPrices[$product] = $this->getCustomPrice($product);
-        }
+        $customPrices = $this->customPriceProvider->getCustomPrices($customer, $products);
 
-        return $newPrices;
+        return $customPrices;
     }
 
-    private function getCustomPrice(string $productId){
-        
-
-        $productPriceCollection = new ProductPriceCollection();
-        $priceCollection = new PriceCollection();
-
-        $priceValue = $this->customPriceProvider->getCustomPrice("customerId", "customerGroupId", [$productId]);
-
-        $priceCollection->add(new Price("b7d2554b0ce847cd82f3ac9bd1c0dfca", $priceValue->getPrice(), $priceValue->getPrice(), false, null, null));
-
-        $start = 1;
-        $end = 100;
-
-        $productPrice = new ProductPriceEntity();
-        $productPrice->setId(Uuid::randomHex());
-        $productPrice->setRuleId(ProductSubscriber::CUSTOMER_PRICE_RULE);
-        $productPrice->setPrice($priceCollection);
-        $productPrice->setProductId($productId);
-        $productPrice->setQuantityStart($start);
-        $productPrice->setQuantityEnd($end);
-
-        $productPriceCollection->add($productPrice);
-        
-        $productPriceCollection->sortByQuantity();
-
-        return [
-            'price' => $productPriceCollection->first() !== null ? $productPriceCollection->first()->getPrice() : null,
-            'prices' => $productPriceCollection,
-            'cheapestPrice' => null,
-        ];
-    }
-    
 }

@@ -6,17 +6,20 @@
 
     <services>
         
+        <service id="Torq\Shopware\CustomPricing\Service\ExternalIdMapper">
+            <argument type="service" id="product.repository"/>
+            <argument type="service" id="customer.repository"/>
+        </service>
+
         <service id="Torq\Shopware\CustomPricing\Service\CustomPriceProvider">
-            <argument type="service" id="Torq\Shopware\CustomPricing\Service\AbstractCustomPriceApiService" />
+            <argument type="service" id="Torq\Shopware\CustomPricing\Service\ExternalIdMapper" />
         </service>
         
         <service id="Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator" 
                  decorates="Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector">
             <argument type="service" id=".inner"/>
-            <argument type="service" id="Torq\Shopware\CustomPricing\Service\CustomPriceProvider"/>
+            <argument type="service" id="@torq.custom_price_provider"/>
         </service>
-
-        
 
     </services>
 </container>
