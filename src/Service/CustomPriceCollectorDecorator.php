@@ -30,16 +30,20 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
 
     public function collect(array $customer, array $products): ?array
     {
-        //only get prices where cache not expired
         $customerId = $customer[0];
+
+        //only get prices where cache not expired
         $unexpired = array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
 
+        //use base decorated for unexpired prices
         $prices =  $this->decorated->collect($customer, $unexpired);
 
+        //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
-        $customPrices = count($expired) > 0 ? $this->customPriceProvider->getCustomPrices($customer, $expired) : [];
+        $customPrices = count($expired) > 0 ? $this->customPriceProvider->getCustomPrices($customerId, $expired) : [];
 
+        //save custom prices for use later
         if(!empty($customPrices))
         {
             $this->saveCustomPrices($customerId, $customPrices);
@@ -49,6 +53,7 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         return $merged;
     }
 
+    //TODO: Make sure to account for correct cacheing time
     private function getUnexpiredProducts(string $customerId, array $products): ?array
     {        
         $customer = $this->connection->fetchAssociative(

@@ -31,10 +31,10 @@ class ExternalIdMapper
         return $mappedProducts;        
     }
 
-    public function mapCustomerId(array $customerIds)
+    public function mapCustomerId(string $customerIds)
     {
         $customers = $this->customerRepository->search(
-            new Criteria($customerIds),
+            new Criteria([$customerIds]),
             \Shopware\Core\Framework\Context::createDefaultContext()
         );
 

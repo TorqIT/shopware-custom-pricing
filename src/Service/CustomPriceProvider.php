@@ -17,7 +17,7 @@ abstract class CustomPriceProvider
 
     }
 
-    public function getCustomPrices(array $customerId, array $productIds)
+    public function getCustomPrices(string $customerId, array $productIds)
     {
         $mappedProductIds = $this->externalIdMapper->mapProductIds($productIds);
         $mappedCustomerId = $this->externalIdMapper->mapCustomerId($customerId);
