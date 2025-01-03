@@ -18,6 +18,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 
 class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
+    
+    private static bool $supressApiCall = false;
+
     public function __construct(
         private CustomPriceCollector $decorated, 
         private readonly CustomPriceProvider $customPriceProvider,
@@ -41,7 +44,12 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
-        $customPrices = count($expired) > 0 ? $this->customPriceProvider->getCustomPrices($customerId, $expired) : [];
+        $customPrices = 
+            count($expired) > 0 && !$this::$supressApiCall 
+            ? 
+            $this->customPriceProvider->getCustomPrices($customerId, $expired) 
+            : 
+            [];
 
         //save custom prices for use later
         if(!empty($customPrices))
@@ -51,6 +59,10 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
 
         $merged = array_merge($prices ?? [], $customPrices ?? []);
         return $merged;
+    }
+
+    public static function setSupressApiCall(bool $supress){
+        self::$supressApiCall = $supress;
     }
 
     //TODO: Make sure to account for correct cacheing time
