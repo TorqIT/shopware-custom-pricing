@@ -1,12 +1,27 @@
 <?xml version="1.0" ?>
-
 <container xmlns="http://symfony.com/schema/dic/services"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+           xsi:schemaLocation="http://symfony.com/schema/dic/services
+           http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        
+        <service id="Torq\Shopware\CustomPricing\Service\ExternalIdMapper">
+            <argument type="service" id="product.repository"/>
+            <argument type="service" id="customer.repository"/>
+        </service>
 
-    
+        <service id="Torq\Shopware\CustomPricing\Service\CustomPriceProvider">
+            <argument type="service" id="Torq\Shopware\CustomPricing\Service\ExternalIdMapper" />
+        </service>
+        
+        <service id="Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator" 
+                 decorates="Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector">
+            <argument type="service" id=".inner"/>
+            <argument type="service" id="torq.custom_price_provider"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <argument type="service" id="custom_price.repository"/>
+        </service>
 
     </services>
 </container>
