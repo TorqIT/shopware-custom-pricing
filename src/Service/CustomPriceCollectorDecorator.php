@@ -4,31 +4,27 @@ namespace Torq\Shopware\CustomPricing\Service;
 
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\ParameterType;
 use Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector;
 use Shopware\Commercial\CustomPricing\Entity\CustomPrice\CustomPriceDefinition;
-use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceCollection;
-use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceEntity;
 use Shopware\Core\Framework\Uuid\Uuid;
-use Shopware\Commercial\CustomPricing\Subscriber\ProductSubscriber;
-use Shopware\Core\Framework\DataAbstractionLayer\Pricing\PriceCollection;
-use Shopware\Core\Framework\DataAbstractionLayer\Pricing\Price;
-use Shopware\Commercial\CustomPricing\Domain\CustomPriceUpdater;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 
 class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
     
     private static bool $supressApiCall = false;
+    private CustomPriceProvider $customPriceProvider;
 
     public function __construct(
         private CustomPriceCollector $decorated, 
-        private readonly CustomPriceProvider $customPriceProvider,
         private readonly Connection $connection,
-        private readonly EntityRepository $customPriceRepository
+        private readonly EntityRepository $customPriceRepository,
+        iterable $customPriceProviders
     )
     {
-        
+        $i = $customPriceProviders->getIterator();
+
+        $this->customPriceProvider = $i->current();
     }
 
     public function collect(array $customer, array $products): ?array

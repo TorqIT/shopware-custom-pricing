@@ -18,9 +18,9 @@
         <service id="Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator" 
                  decorates="Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector">
             <argument type="service" id=".inner"/>
-            <argument type="service" id="torq.custom_price_provider"/>
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="custom_price.repository"/>
+            <argument type="tagged_iterator" tag="torq.custom_price_provider"/>
         </service>
 
     </services>
