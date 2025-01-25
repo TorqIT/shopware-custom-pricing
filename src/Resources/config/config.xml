@@ -57,6 +57,24 @@
             <defaultValue>false</defaultValue>
             <helpText>Should prices always be pulled from the API when the off-canvas cart is opened? (This will reduce performance)</helpText>   
         </input-field>
+
+        <input-field type="bool">
+            <name>forceCartPreviewRecalculate</name>
+            <label>Force Cart Preview Recalculation</label>
+            <defaultValue>true</defaultValue>
+            <helpText>Should prices always be pulled from the API when the cart preview is loaded [URL: /checkout/cart]? (Recommended true, though will reduce performance)</helpText>   
+        </input-field>
+
+        <input-field type="bool">
+            <name>forceCheckoutConfirmRecalculate</name>
+            <label>Force Checkout Confirm Cart Recalculation</label>
+            <defaultValue>true</defaultValue>
+            <helpText>Should prices always be pulled from the API when at the final step of checkout [URL: /checkout/confirm]? (Recommended true, though will reduce performance)</helpText>   
+        </input-field>
+
+    </card>
+    <card>
+        <title>Gooday</title>
     </card>
 
 </config>

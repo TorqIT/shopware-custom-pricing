@@ -20,7 +20,6 @@ class CacheControlSubscriber implements EventSubscriberInterface
         return [
             KernelEvents::CONTROLLER => 'handleControllerEvent'
         ];
-
     }
 
     public function handleControllerEvent(ControllerEvent $event): void
@@ -29,14 +28,16 @@ class CacheControlSubscriber implements EventSubscriberInterface
         $route = $request->attributes->get('_route');
 
         match($route) {
-            'frontend.cart.offcanvas' => $this->offCanvasCacheControl($event),
+            'frontend.cart.offcanvas' => $this->cacheControlCheck(ConfigConstants::FORCE_OFF_CANVAS_RECALCULATE),
+            'frontend.checkout.cart.page' => $this->cacheControlCheck(ConfigConstants::FORCE_CART_PREVIEW_RECALCULATE),
+            'frontend.checkout.confirm.page' => $this->cacheControlCheck(ConfigConstants::FORCE_CHECKOUT_CONFIRM_RECALCULATE),
             default => null
         };
     }
 
-    public function offCanvasCacheControl(ControllerEvent $event): void
+    public function cacheControlCheck(string $configControl): void
     {
-        if($this->systemConfigService->get(ConfigConstants::FORCE_OFF_CANVAS_RECALCULATE) === true)
+        if($this->systemConfigService->get($configControl) === true)
         {
             CustomPriceCollectorDecorator::setForceApiCall(true);
         }
