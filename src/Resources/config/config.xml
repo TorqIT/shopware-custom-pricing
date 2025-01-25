@@ -74,7 +74,15 @@
 
     </card>
     <card>
-        <title>Gooday</title>
+        <title>Async Pricing</title>
+
+        <input-field type="bool">
+            <name>productDetailPageAsync</name>
+            <label>Product Detail Page Async</label>
+            <defaultValue>false</defaultValue>
+            <helpText>The product detail page will load pricing after the page loads.</helpText>   
+        </input-field>
+
     </card>
 
 </config>

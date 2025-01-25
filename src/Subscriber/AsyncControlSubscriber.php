@@ -9,8 +9,9 @@ use Symfony\Component\HttpKernel\KernelEvents as KernelEvents;
 use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
 use Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator;
 
-class CacheControlSubscriber implements EventSubscriberInterface
+class AsyncControlSubscriber implements EventSubscriberInterface
 {
+
     public function __construct(private readonly SystemConfigService $systemConfigService){}
 
     public static function getSubscribedEvents() 

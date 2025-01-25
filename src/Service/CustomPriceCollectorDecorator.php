@@ -137,7 +137,11 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         return $b;
     }
 
-    public static function setForceApiCall(bool $force){
-        self::$forceApiCall = $force;
+    public static function setForceApiCall(bool $forceApiCall){
+        self::$forceApiCall = $forceApiCall;
+    }
+
+    public static function setSupressApiCall(bool $supressApiCall){
+        self::$supressApiCall = $supressApiCall;
     }
 }
