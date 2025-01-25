@@ -29,7 +29,7 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
-        <service id="Torq\Shopware\CustomPricing\Subscriber\AsyncControlSubscriber">
+        <service id="Torq\Shopware\CustomPricing\Subscriber\ApiSuppressionSubscriber">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
             <tag name="kernel.event_subscriber"/>
         </service>

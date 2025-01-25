@@ -74,6 +74,17 @@
 
     </card>
     <card>
+        <title>API Suppression</title>
+
+        <input-field type="bool">
+            <name>searchSuppression</name>
+            <label>Search Suppression</label>
+            <defaultValue>true</defaultValue>
+            <helpText>API driven pricing will be suppressed during search (improves performance)</helpText>   
+        </input-field>
+
+    </card>
+    <card>
         <title>Async Pricing</title>
 
         <input-field type="bool">

@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\KernelEvents as KernelEvents;
 use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
 use Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator;
 
-class AsyncControlSubscriber implements EventSubscriberInterface
+class ApiSuppressionSubscriber implements EventSubscriberInterface
 {
 
     public function __construct(private readonly SystemConfigService $systemConfigService){}
@@ -27,12 +27,13 @@ class AsyncControlSubscriber implements EventSubscriberInterface
         $route = $request->attributes->get('_route');
 
         match($route) {
-            'frontend.detail.page' => $this->cacheControlCheck(ConfigConstants::PRODUCT_DETAIL_PAGE_ASYNC),
+            'frontend.detail.page' => $this->suppressionCheck(ConfigConstants::PRODUCT_DETAIL_PAGE_ASYNC),
+            'frontend.search.suggest' => $this->suppressionCheck(ConfigConstants::SEARCH_SUPPRESSION),
             default => null
         };
     }
 
-    public function cacheControlCheck(string $configControl): void
+    public function suppressionCheck(string $configControl): void
     {
         if($this->systemConfigService->get($configControl) === true)
         {
