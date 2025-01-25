@@ -34,5 +34,15 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
+        <service id="Torq\Shopware\CustomPricing\Storefront\Controller\AsyncPricingController" public="true">
+            <argument type="service" id="sales_channel.product.repository" />
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+            <call method="setTwig">
+                 <argument type="service" id="twig"/>
+             </call>
+        </service>
+
     </services>
 </container>

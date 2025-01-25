@@ -27,9 +27,7 @@ class AsyncControlSubscriber implements EventSubscriberInterface
         $route = $request->attributes->get('_route');
 
         match($route) {
-            'frontend.cart.offcanvas' => $this->cacheControlCheck(ConfigConstants::FORCE_OFF_CANVAS_RECALCULATE),
-            'frontend.checkout.cart.page' => $this->cacheControlCheck(ConfigConstants::FORCE_CART_PREVIEW_RECALCULATE),
-            'frontend.checkout.confirm.page' => $this->cacheControlCheck(ConfigConstants::FORCE_CHECKOUT_CONFIRM_RECALCULATE),
+            'frontend.detail.page' => $this->cacheControlCheck(ConfigConstants::PRODUCT_DETAIL_PAGE_ASYNC),
             default => null
         };
     }
@@ -38,7 +36,7 @@ class AsyncControlSubscriber implements EventSubscriberInterface
     {
         if($this->systemConfigService->get($configControl) === true)
         {
-            CustomPriceCollectorDecorator::setForceApiCall(true);
+            CustomPriceCollectorDecorator::setSupressApiCall(true);
         }
     }
 
