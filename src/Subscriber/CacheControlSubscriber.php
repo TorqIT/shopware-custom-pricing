@@ -7,7 +7,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\KernelEvents as KernelEvents;
 use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
-use Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator;
+use Torq\Shopware\CustomPricing\Service\CustomPriceApiDirector;
 
 class CacheControlSubscriber implements EventSubscriberInterface
 {
@@ -37,7 +37,7 @@ class CacheControlSubscriber implements EventSubscriberInterface
     {
         if($this->systemConfigService->get($configControl) === true)
         {
-            CustomPriceCollectorDecorator::setForceApiCall(true);
+            CustomPriceApiDirector::setForceApiCall(true);
         }
     }
 

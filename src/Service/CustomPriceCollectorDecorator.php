@@ -13,10 +13,6 @@ use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
 
 class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
-    
-    private static bool $supressApiCall = false;
-    private static bool $forceApiCall = false;
-
     private CustomPriceProvider $customPriceProvider;
 
     public function __construct(
@@ -37,16 +33,16 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $customerId = $customer[0];
 
         //only get prices where cache not expired
-        $unexpired = self::$forceApiCall ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
+        $unexpired = CustomPriceApiDirector::getForceApiCall() ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
 
         //use base decorated for unexpired prices
-        $prices =  self::$forceApiCall ? [] : $this->decorated->collect($customer, $unexpired);
+        $prices =  CustomPriceApiDirector::getForceApiCall() ? [] : $this->decorated->collect($customer, $unexpired);
 
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
         $customPrices = 
-            count($expired) > 0 && !$this::$supressApiCall 
+            count($expired) > 0 && !CustomPriceApiDirector::getSupressApiCall() 
             ? 
             $this->customPriceProvider->getCustomPrices($customerId, $expired) 
             : 
@@ -135,13 +131,5 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $b = $this->customPriceRepository->upsert($payload, \Shopware\Core\Framework\Context::createDefaultContext());
 
         return $b;
-    }
-
-    public static function setForceApiCall(bool $forceApiCall){
-        self::$forceApiCall = $forceApiCall;
-    }
-
-    public static function setSupressApiCall(bool $supressApiCall){
-        self::$supressApiCall = $supressApiCall;
     }
 }
