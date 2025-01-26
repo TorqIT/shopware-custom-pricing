@@ -77,6 +77,13 @@
         <title>API Suppression</title>
 
         <input-field type="bool">
+            <name>productListingSuppression</name>
+            <label>Product Listing Suppression</label>
+            <defaultValue>false</defaultValue>
+            <helpText>API pricing won't be used for product listings. Use with caution, you'll need to create your own async solution to display accurate pricing!</helpText>   
+        </input-field>
+
+        <input-field type="bool">
             <name>searchSuppression</name>
             <label>Search Suppression</label>
             <defaultValue>true</defaultValue>

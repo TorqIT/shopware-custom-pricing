@@ -2,6 +2,7 @@
 
 namespace Torq\Shopware\CustomPricing\Subscriber;
 
+use Shopware\Core\Content\Product\Events\ProductListingCriteriaEvent;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
@@ -11,13 +12,13 @@ use Torq\Shopware\CustomPricing\Service\CustomPriceCollectorDecorator;
 
 class ApiSuppressionSubscriber implements EventSubscriberInterface
 {
-
     public function __construct(private readonly SystemConfigService $systemConfigService){}
 
     public static function getSubscribedEvents() 
     { 
         return [
-            KernelEvents::CONTROLLER => 'handleControllerEvent'
+            KernelEvents::CONTROLLER => 'handleControllerEvent',
+            ProductListingCriteriaEvent::class => "handleProductListingCriteria"
         ];
     }
 
@@ -33,12 +34,25 @@ class ApiSuppressionSubscriber implements EventSubscriberInterface
         };
     }
 
-    public function suppressionCheck(string $configControl): void
+    public function handleProductListingCriteria(ProductListingCriteriaEvent $event): void
     {
-        if($this->systemConfigService->get($configControl) === true)
+        if($this->configValue(ConfigConstants::PRODUCT_LISTING_SUPPRESSION) === true)
         {
             CustomPriceCollectorDecorator::setSupressApiCall(true);
         }
+    }
+
+    public function suppressionCheck(string $configControl): void
+    {
+        if($this->configValue($configControl) === true)
+        {
+            CustomPriceCollectorDecorator::setSupressApiCall(true);
+        }
+    }
+
+    private function configValue(string $key): bool
+    {
+        return !!$this->systemConfigService->get($key);
     }
 
 }
