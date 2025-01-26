@@ -8,17 +8,18 @@ use Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector;
 use Shopware\Commercial\CustomPricing\Entity\CustomPrice\CustomPriceDefinition;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\System\SystemConfig\SystemConfigService;
+use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
 
 class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
-    
-    private static bool $supressApiCall = false;
     private CustomPriceProvider $customPriceProvider;
 
     public function __construct(
         private CustomPriceCollector $decorated, 
         private readonly Connection $connection,
         private readonly EntityRepository $customPriceRepository,
+        private readonly SystemConfigService $systemConfigService,
         iterable $customPriceProviders
     )
     {
@@ -32,16 +33,16 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $customerId = $customer[0];
 
         //only get prices where cache not expired
-        $unexpired = array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
+        $unexpired = CustomPriceApiDirector::getForceApiCall() ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
 
         //use base decorated for unexpired prices
-        $prices =  $this->decorated->collect($customer, $unexpired);
+        $prices =  CustomPriceApiDirector::getForceApiCall() ? [] : $this->decorated->collect($customer, $unexpired);
 
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
         $customPrices = 
-            count($expired) > 0 && !$this::$supressApiCall 
+            count($expired) > 0 && !CustomPriceApiDirector::getSupressApiCall() 
             ? 
             $this->customPriceProvider->getCustomPrices($customerId, $expired) 
             : 
@@ -57,11 +58,6 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         return $merged;
     }
 
-    public static function setSupressApiCall(bool $supress){
-        self::$supressApiCall = $supress;
-    }
-
-    //TODO: Make sure to account for correct cacheing time
     private function getUnexpiredProducts(string $customerId, array $products): ?array
     {        
         $customer = $this->connection->fetchAssociative(
@@ -79,6 +75,8 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             ? Uuid::fromHexToBytes($customer['customer_group_id'])
             : null;
 
+        $cacheDuration = $this->systemConfigService->get(ConfigConstants::CACHE_DURATION) ?? 'PT5M';
+
         /** @var array<int, array{productId: string, customerId: ?string, customerGroupId: ?string, price: ?string}> $result */
         return $this->connection->createQueryBuilder()
             ->select('LOWER(HEX(product_id)) AS productId')
@@ -89,7 +87,7 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             ->setParameter('productIds', Uuid::fromHexToBytesList($products), ArrayParameterType::BINARY)
             ->setParameter('customerId', $customerId)
             ->setParameter('groupId', $customerGroupId)
-            ->setParameter('updatedAt', (new \DateTime())->sub(new \DateInterval('PT5M'))->format("Y-m-d H:i:s"))
+            ->setParameter('updatedAt', (new \DateTime())->sub(new \DateInterval($cacheDuration))->format("Y-m-d H:i:s"))
             ->executeQuery()
             ->fetchAllAssociative();
     }

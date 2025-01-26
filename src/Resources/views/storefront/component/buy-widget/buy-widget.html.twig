@@ -1,0 +1,25 @@
+{% sw_extends '@Storefront/storefront/component/buy-widget/buy-widget.html.twig' %}
+
+{% block buy_widget_price %}
+
+    {% if pageType=='product_detail' %}
+        {% set asyncPricing = config(constant('Torq\\Shopware\\CustomPricing\\Constants\\ConfigConstants::PRODUCT_DETAIL_PAGE_ASYNC'))|boolval %}
+
+        {% set torqAsyncProductDetailPagePricing = {
+                productId: page.product.id
+            }
+        %}
+        
+        <div class="product-detail-price-container{% if asyncPricing %} torq-async-product-detail-page-pricing-loading{% endif %}" 
+            {% if asyncPricing %} data-async-product-detail-page-pricing-plugin data-async-product-detail-page-pricing-plugin-options="{{ torqAsyncProductDetailPagePricing|json_encode }}" {% endif %}
+        >
+            {% if asyncPricing %}
+                <div class="torq-async-product-detail-page-pricing-loader loader"></div>
+            {% endif %}
+            {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+        </div>
+    {% else %}
+        {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+    {% endif %}
+    
+{% endblock %}

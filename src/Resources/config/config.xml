@@ -4,13 +4,103 @@
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
 
     <card>
-        <title>Minimal configuration</title>
+        <title>Cache Settings</title>
 
-        <input-field type="text">
-            <name>textField</name>
-            <label>Test field with default value</label>
-            <defaultValue>test</defaultValue>
+        <input-field type="single-select">
+            <name>cacheDuration</name>
+            <label>Cache Duration</label>
+            <helpText>How long should Shopware cache prices before hitting the API?</helpText>
+            <defaultValue>PT5M</defaultValue>
+            <options>
+                <option>
+                    <id>PT5M</id>
+                    <name>5 Minutes</name>
+                </option>
+                <option>
+                    <id>PT15M</id>
+                    <name>15 Minutes</name>
+                </option>
+                <option>
+                    <id>PT30M</id>
+                    <name>30 Minutes</name>
+                </option>
+                <option>
+                    <id>PT1H</id>
+                    <name>1 Hour</name>
+                </option>
+                <option>
+                    <id>PT6H</id>
+                    <name>6 Hours</name>
+                </option>
+                <option>
+                    <id>PT12H</id>
+                    <name>12 Hours</name>
+                </option>
+                <option>
+                    <id>PT24H</id>
+                    <name>24 Hours</name>
+                </option>
+                <option>
+                    <id>PT48H</id>
+                    <name>48 Hours</name>
+                </option>
+                <option>
+                    <id>PT168H</id>
+                    <name>1 Week</name>
+                </option>
+            </options>
         </input-field>
+
+        <input-field type="bool">
+            <name>forceOffCanvasRecalculate</name>
+            <label>Force Off-Canvas Cart Recalculation</label>
+            <defaultValue>false</defaultValue>
+            <helpText>Should prices always be pulled from the API when the off-canvas cart is opened? (This will reduce performance)</helpText>   
+        </input-field>
+
+        <input-field type="bool">
+            <name>forceCartPreviewRecalculate</name>
+            <label>Force Cart Preview Recalculation</label>
+            <defaultValue>true</defaultValue>
+            <helpText>Should prices always be pulled from the API when the cart preview is loaded [URL: /checkout/cart]? (Recommended true, though will reduce performance)</helpText>   
+        </input-field>
+
+        <input-field type="bool">
+            <name>forceCheckoutConfirmRecalculate</name>
+            <label>Force Checkout Confirm Cart Recalculation</label>
+            <defaultValue>true</defaultValue>
+            <helpText>Should prices always be pulled from the API when at the final step of checkout [URL: /checkout/confirm]? (Recommended true, though will reduce performance)</helpText>   
+        </input-field>
+
+    </card>
+    <card>
+        <title>API Suppression</title>
+
+        <input-field type="bool">
+            <name>productListingSuppression</name>
+            <label>Product Listing Suppression</label>
+            <defaultValue>false</defaultValue>
+            <helpText>API pricing won't be used for product listings. Use with caution, you'll need to create your own async solution to display accurate pricing!</helpText>   
+        </input-field>
+
+        <input-field type="bool">
+            <name>searchSuppression</name>
+            <label>Search Suppression</label>
+            <defaultValue>true</defaultValue>
+            <helpText>API driven pricing will be suppressed during search (improves performance)</helpText>   
+        </input-field>
+
+    </card>
+    <card>
+        <title>Async Pricing</title>
+
+        <input-field type="bool">
+            <name>productDetailPageAsync</name>
+            <label>Product Detail Page Async</label>
+            <defaultValue>false</defaultValue>
+            <helpText>The product detail page will load pricing after the page loads.</helpText>   
+        </input-field>
+
     </card>
 
 </config>

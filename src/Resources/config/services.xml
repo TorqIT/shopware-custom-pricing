@@ -20,7 +20,28 @@
             <argument type="service" id=".inner"/>
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="custom_price.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
             <argument type="tagged_iterator" tag="torq.custom_price_provider"/>
+        </service>
+
+        <service id="Torq\Shopware\CustomPricing\Subscriber\CacheControlSubscriber">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Torq\Shopware\CustomPricing\Subscriber\ApiSuppressionSubscriber">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Torq\Shopware\CustomPricing\Storefront\Controller\AsyncPricingController" public="true">
+            <argument type="service" id="sales_channel.product.repository" />
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+            <call method="setTwig">
+                 <argument type="service" id="twig"/>
+             </call>
         </service>
 
     </services>
