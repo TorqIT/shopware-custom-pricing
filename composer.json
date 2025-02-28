@@ -2,7 +2,6 @@
     "name": "torq/custompricing",
     "description": "torq/custompricing",
     "type": "shopware-platform-plugin",
-    "version": "0.3.2",
     "license": "MIT",
     "require": {
         "shopware/core": "^6.6.0",
