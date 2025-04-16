@@ -44,5 +44,13 @@
              </call>
         </service>
 
+        <service id="Torq\Shopware\CustomPricing\Storefront\Controller\QuickAddControllerDecorator" 
+                 decorates="Torq\Shopware\Common\Storefront\Controller\QuickAddController">
+            <argument type="service" id=".inner"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
     </services>
 </container>
