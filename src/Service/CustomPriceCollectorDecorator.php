@@ -15,6 +15,8 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
     private CustomPriceProvider $customPriceProvider;
 
+    public const PARAMETER_SEPERATOR = "~~~";
+
     public function __construct(
         private CustomPriceCollector $decorated, 
         private readonly Connection $connection,
@@ -28,28 +30,44 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $this->customPriceProvider = $i->current();
     }
 
-    public function collect(array $customer, array $products): ?array
+    public function collect(array $customer, array $products ): ?array
     {
-        $customerId = $customer[0];
+        $customerIdStr = $customer[0];
+
+        $parameters = [];
+        //A listener on CustomPriceResolveCustomersEvent can be used to add extra params that will be added to the parameters array for use by the external price api
+        // c0308b8c0927424ca4f3c4040b8affe0~~~special_param_name=thevalue~~~anotherparam=anothervalue
+        $params = explode(self::PARAMETER_SEPERATOR, $customerIdStr);
+        $customerId = $params[0];
+        if(count($params) > 1){    
+            for($i=1; $i < count($params); $i++){
+                $param = explode("=",$params[$i]);
+                if(count($param) > 1){    
+                    $parameters[$param[0]] = $param[1];
+                }
+            }
+        }
+
+        $cacheDuration = $this->systemConfigService->get(ConfigConstants::CACHE_DURATION) ?? 'PT5M';
 
         //only get prices where cache not expired
-        $unexpired = CustomPriceApiDirector::getForceApiCall() ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
+        $unexpired = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
 
         //use base decorated for unexpired prices
-        $prices =  CustomPriceApiDirector::getForceApiCall() ? [] : $this->decorated->collect($customer, $unexpired);
+        $prices = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : $this->decorated->collect([$customerId], $unexpired);
 
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
         $customPrices = 
-            count($expired) > 0 && !CustomPriceApiDirector::getSupressApiCall() 
+            count($expired) > 0 && ($cacheDuration === 'PT0M' || !CustomPriceApiDirector::getSupressApiCall())
             ? 
-            $this->customPriceProvider->getCustomPrices($customerId, $expired) 
+            $this->customPriceProvider->getCustomPrices($customerId, $expired, $parameters) 
             : 
             [];
 
         //save custom prices for use later
-        if(!empty($customPrices))
+        if($cacheDuration !== 'PT0M' && !empty($customPrices))
         {
             $this->saveCustomPrices($customerId, $customPrices);
         }

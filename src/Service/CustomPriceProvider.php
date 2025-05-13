@@ -18,12 +18,12 @@ abstract class CustomPriceProvider
 
     }
 
-    public function getCustomPrices(string $customerId, array $productIds)
+    public function getCustomPrices(string $customerId, array $productIds, array $parameters = [])
     {
         $mappedProductIds = $this->externalIdMapper->mapProductIds($productIds);
         $mappedCustomerId = $this->externalIdMapper->mapCustomerId($customerId);
 
-        $externalPrices = $this->getExternalPrices($mappedCustomerId, $mappedProductIds);
+        $externalPrices = $this->getExternalPrices($mappedCustomerId, $mappedProductIds, $parameters);
 
         $prices = [];
         foreach ($externalPrices as $productId => $customPrice) {
@@ -85,5 +85,5 @@ abstract class CustomPriceProvider
      *
      * @return array<string, CustomPriceCollection|null>
      */
-    protected abstract function getExternalPrices(array $customerIdMapped, array $productIdsMapped): array;
+    protected abstract function getExternalPrices(array $customerIdMapped, array $productIdsMapped, array $parameters = []): array;
 }

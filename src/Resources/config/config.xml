@@ -13,6 +13,10 @@
             <defaultValue>PT5M</defaultValue>
             <options>
                 <option>
+                    <id>PT0M</id>
+                    <name>0 Minutes (no caching)</name>
+                </option>
+                <option>
                     <id>PT5M</id>
                     <name>5 Minutes</name>
                 </option>
