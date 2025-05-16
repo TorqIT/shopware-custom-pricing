@@ -41,4 +41,10 @@ class CustomPriceApiDirector
 
         self::$supressApiCall = $supressApiCall;
     }
+
+    public static function forceApiSuppression(bool $force){
+        self::$supressApiCall = $force;
+        if($force)
+            self::$forceApiCall = false;
+    }
 }

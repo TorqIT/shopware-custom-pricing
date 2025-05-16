@@ -59,8 +59,9 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
+        $callApi = CustomPriceApiDirector::getSupressApiCall() ? false:($cacheDuration === 'PT0M' || !CustomPriceApiDirector::getSupressApiCall());
         $customPrices = 
-            count($expired) > 0 && ($cacheDuration === 'PT0M' || !CustomPriceApiDirector::getSupressApiCall())
+            count($expired) > 0 && $callApi
             ? 
             $this->customPriceProvider->getCustomPrices($customerId, $expired, $parameters) 
             : 
