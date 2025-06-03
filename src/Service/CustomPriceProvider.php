@@ -13,7 +13,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 abstract class CustomPriceProvider
 {
-    public function __construct(private ExternalIdMapper $externalIdMapper)
+    public function __construct(protected ExternalIdMapper $externalIdMapper)
     {
 
     }
@@ -79,6 +79,9 @@ abstract class CustomPriceProvider
         ];
     }
 
+    public function processStock(string $customerId, array $productIds, array $parameters = []){
+        //for implementations that need to update stock during pricing calls, the child class cam override this method
+    }
 
     /**
      * @param array<string> $products

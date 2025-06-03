@@ -21,6 +21,7 @@
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="service" id="custom_price.repository"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="Shopware\Commercial\CustomPricing\Entity\FieldSerializer\CustomPriceFieldSerializer"/>
             <argument type="tagged_iterator" tag="torq.custom_price_provider"/>
         </service>
 
@@ -50,6 +51,14 @@
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
+        </service>
+
+        <service id="Torq\Shopware\CustomPricing\Entity\TorqCustomPriceCustomData\TorqCustomPriceCustomDataDefinition">
+            <tag name="shopware.entity.definition" entity="torq_custom_price_custom_data" />
+        </service>
+        
+        <service id="Torq\Shopware\CustomPricing\Extension\CustomPrice\CustomPriceExtension">
+            <tag name="shopware.entity.extension"/>
         </service>
 
     </services>

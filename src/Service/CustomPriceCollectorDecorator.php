@@ -2,14 +2,22 @@
 
 namespace Torq\Shopware\CustomPricing\Service;
 
-use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
-use Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector;
-use Shopware\Commercial\CustomPricing\Entity\CustomPrice\CustomPriceDefinition;
+use Doctrine\DBAL\ArrayParameterType;
 use Shopware\Core\Framework\Uuid\Uuid;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
+use Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Commercial\CustomPricing\Subscriber\ProductSubscriber;
+use Shopware\Commercial\CustomPricing\Entity\Field\CustomPriceField;
+use Shopware\Core\Framework\DataAbstractionLayer\Doctrine\FetchModeHelper;
+use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceEntity;
+use Shopware\Commercial\CustomPricing\Entity\CustomPrice\CustomPriceDefinition;
+use Shopware\Core\Content\Product\Aggregate\ProductPrice\ProductPriceCollection;
+use Shopware\Commercial\CustomPricing\Entity\CustomPrice\Price\CustomPriceCollection;
+use Shopware\Commercial\CustomPricing\Entity\FieldSerializer\CustomPriceFieldSerializer;
+use Torq\Shopware\CustomPricing\Entity\TorqCustomPriceCustomData\TorqCustomPriceCustomDataDefinition;
 
 class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
@@ -22,7 +30,8 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         private readonly Connection $connection,
         private readonly EntityRepository $customPriceRepository,
         private readonly SystemConfigService $systemConfigService,
-        iterable $customPriceProviders
+        private readonly CustomPriceFieldSerializer $priceFieldSerializer,
+        iterable $customPriceProviders,
     )
     {
         $i = $customPriceProviders->getIterator();
@@ -51,10 +60,10 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $cacheDuration = $this->systemConfigService->get(ConfigConstants::CACHE_DURATION) ?? 'PT5M';
 
         //only get prices where cache not expired
-        $unexpired = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
+        $unexpired = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : array_column($this->getUnexpiredProducts($customerId, $products, $parameters), "productId");  
 
         //use base decorated for unexpired prices
-        $prices = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : $this->decorated->collect([$customerId], $unexpired);
+        $prices = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : $this->collectCustomPrices([$customerId], $products, $parameters);
 
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
@@ -70,14 +79,17 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         //save custom prices for use later
         if($cacheDuration !== 'PT0M' && !empty($customPrices))
         {
-            $this->saveCustomPrices($customerId, $customPrices);
+            $this->saveCustomPrices($customerId, $customPrices, $parameters);
         }
+
+        //let the custom price provider decide if it wants to process stock as well
+        $this->customPriceProvider->processStock($customerId, $products, $parameters);
 
         $merged = array_merge($prices ?? [], $customPrices ?? []);
         return $merged;
     }
 
-    private function getUnexpiredProducts(string $customerId, array $products): ?array
+    private function getUnexpiredProducts(string $customerId, array $products, $parameters): ?array
     {        
         $customer = $this->connection->fetchAssociative(
             'SELECT LOWER(HEX(id)) as id, LOWER(HEX(customer_group_id)) as customer_group_id FROM customer WHERE id = :customerId',
@@ -97,23 +109,60 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $cacheDuration = $this->systemConfigService->get(ConfigConstants::CACHE_DURATION) ?? 'PT5M';
 
         /** @var array<int, array{productId: string, customerId: ?string, customerGroupId: ?string, price: ?string}> $result */
-        return $this->connection->createQueryBuilder()
+        $queryBuilder = $this->connection->createQueryBuilder()
             ->select('LOWER(HEX(product_id)) AS productId')
-            ->from(CustomPriceDefinition::ENTITY_NAME)
+            ->from(CustomPriceDefinition::ENTITY_NAME, 'customPrice')
             ->where('product_id IN (:productIds)')
             ->andWhere('(customer_id = :customerId OR customer_group_id = :groupId)')
-            ->andWhere('((created_at > :updatedAt AND updated_at IS NULL) OR (updated_at > :updatedAt))')
+            ->andWhere('((customPrice.created_at > :updatedAt AND customPrice.updated_at IS NULL) OR (customPrice.updated_at > :updatedAt))')
             ->setParameter('productIds', Uuid::fromHexToBytesList($products), ArrayParameterType::BINARY)
             ->setParameter('customerId', $customerId)
             ->setParameter('groupId', $customerGroupId)
-            ->setParameter('updatedAt', (new \DateTime())->sub(new \DateInterval($cacheDuration))->format("Y-m-d H:i:s"))
-            ->executeQuery()
-            ->fetchAllAssociative();
+            ->setParameter('updatedAt', (new \DateTime())->sub(new \DateInterval($cacheDuration))->format("Y-m-d H:i:s"));
+
+        //any parameters are used to query the custom_fields data
+        if(!empty($parameters)){
+            $queryBuilder->leftJoin('customPrice', TorqCustomPriceCustomDataDefinition::ENTITY_NAME,'customPriceData','customPrice.id = customPriceData.custom_price_id');
+            foreach($parameters as $key => $value){
+                $queryBuilder->andWhere("json_value(customPriceData.custom_fields, '$." . $key . "')  = :" . $key )
+                    ->setParameter($key, $value);
+            }
+        }
+
+        return  $queryBuilder->executeQuery()->fetchAllAssociative();
     }
 
-    private function saveCustomPrices($customer, $customPrices){
+    private function collectCustomPrices(array $customer, array $products, $parameters): ?array
+    {        
+        if(empty($parameters)){
+            $this->decorated->collect($customer, $products);
+        }
+
+        $customPrices = [];
+        foreach ($customer as $customerId) {
+            $customPrices = $this->getCustomPrices($products, $customerId, $parameters);
+
+            if (\count($customPrices) > 0) {
+                break;
+            }
+        }
+
+        if (\count($customPrices) === 0) {
+            return null;
+        }
+
+        $prices = [];
+        foreach ($customPrices as $productId => $customPrice) {
+            $prices[$productId] = $this->createPriceCollections($productId, $customPrice);
+        }
+
+        return $prices;
+    }
+
+    private function saveCustomPrices($customer, $customPrices, $parameters){
         $payload = [];
 
+        $values = implode("|",$parameters);
         foreach($customPrices as $productId => $customPrice){
             
             $customPriceEntry = [
@@ -122,6 +171,15 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
                 'customerId' => $customer,
                 'price' => []
             ];
+
+            if(!empty($parameters)){
+                 $customPriceEntry['torqCustomData'] = [
+                    'id' => md5($customer . $productId . $values),
+                    'customFields' => [
+                        ...$parameters  //save all the extra params as custom fields
+                    ],
+                ];
+            }
 
             foreach($customPrice['prices'] as $price){
 
@@ -141,6 +199,10 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
                     $outerPrice['price'][] = $innerPrice;
                 }
                 $customPriceEntry['price'][] = $outerPrice;
+
+                if(!empty($parameters)){
+                    $customPriceEntry['torqCustomData']['price'][] = $outerPrice;
+                }
             }
 
             $payload[] =  $customPriceEntry;
@@ -150,5 +212,102 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $b = $this->customPriceRepository->upsert($payload, \Shopware\Core\Framework\Context::createDefaultContext());
 
         return $b;
+    }
+
+
+
+        /**
+     * @param array<CustomPriceCollection>|null $customPrice
+     *
+     * @return array{price: PriceCollection|null, prices: ProductPriceCollection, cheapestPrice: null}
+     */
+    private function createPriceCollections(string $productId, ?array $customPrice): ?array
+    {
+        if ($customPrice === null) {
+            return null;
+        }
+
+        $productPriceCollection = new ProductPriceCollection();
+
+        foreach ($customPrice as $price) {
+            if ($price->first() === null) {
+                continue;
+            }
+
+            $start = $price->first()->getQuantityStart();
+            $end = $price->first()->getQuantityEnd();
+
+            $productPrice = new ProductPriceEntity();
+            $productPrice->setId(Uuid::randomHex());
+            $productPrice->setRuleId(ProductSubscriber::CUSTOMER_PRICE_RULE);
+            $productPrice->setPrice($price);
+            $productPrice->setProductId($productId);
+            $productPrice->setQuantityStart($start);
+            $productPrice->setQuantityEnd($end);
+
+            $productPriceCollection->add($productPrice);
+        }
+        $productPriceCollection->sortByQuantity();
+
+        return [
+            'price' => $productPriceCollection->first() !== null ? $productPriceCollection->first()->getPrice() : null,
+            'prices' => $productPriceCollection,
+            'cheapestPrice' => null,
+        ];
+    }
+
+    /**
+     * @param array<string> $products
+     *
+     * @return array<string, array<CustomPriceCollection>|null>
+     */
+    private function getCustomPrices(array $products, string $customerId, $parameters): array
+    {
+        $customer = $this->connection->fetchAssociative(
+            'SELECT LOWER(HEX(id)) as id, LOWER(HEX(customer_group_id)) as customer_group_id FROM customer WHERE id = :customerId',
+            ['customerId' => Uuid::fromHexToBytes($customerId)]
+        );
+
+        if (!$customer || !\is_string($customer['id'])) {
+            return [];
+        }
+
+        $tmpField = new CustomPriceField('price', 'price');
+
+        $customerId = Uuid::fromHexToBytes($customer['id']);
+        $customerGroupId = \is_string($customer['customer_group_id']) && $customer['customer_group_id']
+            ? Uuid::fromHexToBytes($customer['customer_group_id'])
+            : null;
+
+        /** @var array<int, array{productId: string, customerId: ?string, customerGroupId: ?string, price: ?string}> $result */
+        $queryBuilder = $this->connection->createQueryBuilder()
+            ->select('LOWER(HEX(product_id)) AS productId', 'LOWER(HEX(customer_id)) AS customerId', 'LOWER(HEX(customer_group_id)) AS customerGroupId', (!empty($parameters) ? 'customPriceData.price':'customPrice.price'))
+            ->from(CustomPriceDefinition::ENTITY_NAME, 'customPrice')
+            ->where('product_id IN (:productIds)')
+            ->andWhere('(customer_id = :customerId OR customer_group_id = :groupId)')
+            ->setParameter('productIds', Uuid::fromHexToBytesList($products), ArrayParameterType::BINARY)
+            ->setParameter('customerId', $customerId)
+            ->setParameter('groupId', $customerGroupId);
+
+            //any parameters are used to query the custom_fields data
+        if(!empty($parameters)){
+            $queryBuilder->leftJoin('customPrice', TorqCustomPriceCustomDataDefinition::ENTITY_NAME,'customPriceData','customPrice.id = customPriceData.custom_price_id');
+            foreach($parameters as $key => $value){
+                $queryBuilder->andWhere("json_value(customPriceData.custom_fields, '$." . $key . "')  = :" . $key )
+                    ->setParameter($key, $value);
+            }
+        }
+
+        $result = $queryBuilder->executeQuery()->fetchAllAssociative();
+
+        \usort($result, static fn (array $a, array $b) => $a['customerGroupId'] === null ? 1 : -1);
+
+        $result = FetchModeHelper::groupUnique($result);
+        /** @var array<string, array{customerId: string, customerGroupId: string, price: string}> $result */
+
+        return array_map(
+            fn (array $price) => $this->priceFieldSerializer->decode($tmpField, $price['price']),
+            $result
+        );
     }
 }
