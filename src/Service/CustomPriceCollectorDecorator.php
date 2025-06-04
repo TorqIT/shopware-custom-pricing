@@ -114,19 +114,22 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             ->from(CustomPriceDefinition::ENTITY_NAME, 'customPrice')
             ->where('product_id IN (:productIds)')
             ->andWhere('(customer_id = :customerId OR customer_group_id = :groupId)')
-            ->andWhere('((customPrice.created_at > :updatedAt AND customPrice.updated_at IS NULL) OR (customPrice.updated_at > :updatedAt))')
             ->setParameter('productIds', Uuid::fromHexToBytesList($products), ArrayParameterType::BINARY)
             ->setParameter('customerId', $customerId)
             ->setParameter('groupId', $customerGroupId)
             ->setParameter('updatedAt', (new \DateTime())->sub(new \DateInterval($cacheDuration))->format("Y-m-d H:i:s"));
 
         //any parameters are used to query the custom_fields data
+        //TODO I think the speed of this is suspect
         if(!empty($parameters)){
             $queryBuilder->leftJoin('customPrice', TorqCustomPriceCustomDataDefinition::ENTITY_NAME,'customPriceData','customPrice.id = customPriceData.custom_price_id');
+            $queryBuilder->andWhere('((customPriceData.created_at > :updatedAt AND customPriceData.updated_at IS NULL) OR (customPriceData.updated_at > :updatedAt))');
             foreach($parameters as $key => $value){
                 $queryBuilder->andWhere("json_value(customPriceData.custom_fields, '$." . $key . "')  = :" . $key )
                     ->setParameter($key, $value);
             }
+        }else{
+            $queryBuilder->andWhere('((customPrice.created_at > :updatedAt AND customPrice.updated_at IS NULL) OR (customPrice.updated_at > :updatedAt))');
         }
 
         return  $queryBuilder->executeQuery()->fetchAllAssociative();
