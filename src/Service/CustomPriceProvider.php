@@ -79,10 +79,6 @@ abstract class CustomPriceProvider
         ];
     }
 
-    public function processStock(string $customerId, array $productIds, array $parameters = []){
-        //for implementations that need to update stock during pricing calls, the child class cam override this method
-    }
-
     /**
      * @param array<string> $products
      *

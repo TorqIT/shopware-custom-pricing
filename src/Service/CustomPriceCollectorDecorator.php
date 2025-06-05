@@ -82,9 +82,6 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             $this->saveCustomPrices($customerId, $customPrices, $parameters);
         }
 
-        //let the custom price provider decide if it wants to process stock as well
-        $this->customPriceProvider->processStock($customerId, $products, $parameters);
-
         $merged = array_merge($prices ?? [], $customPrices ?? []);
         return $merged;
     }
