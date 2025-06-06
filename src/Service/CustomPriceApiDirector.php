@@ -2,14 +2,6 @@
 
 namespace Torq\Shopware\CustomPricing\Service;
 
-use Doctrine\DBAL\ArrayParameterType;
-use Doctrine\DBAL\Connection;
-use Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector;
-use Shopware\Commercial\CustomPricing\Entity\CustomPrice\CustomPriceDefinition;
-use Shopware\Core\Framework\Uuid\Uuid;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Torq\Shopware\CustomPricing\Constants\ConfigConstants;
 use Torq\Shopware\CustomPricing\Exception\CustomPriceApiBehaviourIncorrectException;
 
 class CustomPriceApiDirector 
@@ -23,7 +15,7 @@ class CustomPriceApiDirector
     }
 
     public static function setForceApiCall(bool $forceApiCall){
-        if(self::$supressApiCall == true){
+        if(self::$supressApiCall == true && $forceApiCall == true){
             throw new CustomPriceApiBehaviourIncorrectException();
         }
 
@@ -34,17 +26,25 @@ class CustomPriceApiDirector
         return self::$supressApiCall;
     }
 
-    public static function setSupressApiCall(bool $supressApiCall){
-        if(self::$forceApiCall == true){
+    public static function setSupressApiCall(bool $suppressApiCall){
+        if(self::$forceApiCall == true && $suppressApiCall == true){
             throw new CustomPriceApiBehaviourIncorrectException();
         }
 
-        self::$supressApiCall = $supressApiCall;
+        self::$supressApiCall = $suppressApiCall;
     }
 
-    public static function forceApiSuppression(bool $force){
-        self::$supressApiCall = $force;
-        if($force)
-            self::$forceApiCall = false;
+
+    public static function runWithSuppressedApi(callable $function) : mixed {
+        $forceOriginal = self::$forceApiCall;
+        $supressOriginal = self::$supressApiCall;
+
+        self::setForceApiCall(false);
+        self::setSupressApiCall(true);
+        $result = $function();
+        self::setSupressApiCall($forceOriginal);
+        self::setSupressApiCall($supressOriginal);
+
+        return $result;
     }
 }
