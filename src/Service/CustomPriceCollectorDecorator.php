@@ -15,7 +15,8 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
 {
     private CustomPriceProvider $customPriceProvider;
 
-    public const PARAMETER_SEPERATOR = "~~~";
+    private const CACHE_DURATION_DEFAULT = 'PT5M';
+    private const CACHE_DURATION_NO_CACHE = 'PT0M'; 
 
     public function __construct(
         private CustomPriceCollector $decorated, 
@@ -32,48 +33,36 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
 
     public function collect(array $customer, array $products ): ?array
     {
-        $customerIdStr = $customer[0];
+        $customerId = $customer[0];
 
-        $parameters = [];
-        //A listener on CustomPriceResolveCustomersEvent can be used to add extra params that will be added to the parameters array for use by the external price api
-        // c0308b8c0927424ca4f3c4040b8affe0~~~special_param_name=thevalue~~~anotherparam=anothervalue
-        $params = explode(self::PARAMETER_SEPERATOR, $customerIdStr);
-        $customerId = $params[0];
-        if(count($params) > 1){    
-            for($i=1; $i < count($params); $i++){
-                $param = explode("=",$params[$i]);
-                if(count($param) > 1){    
-                    $parameters[$param[0]] = $param[1];
-                }
-            }
-        }
-
-        $cacheDuration = $this->systemConfigService->get(ConfigConstants::CACHE_DURATION) ?? 'PT5M';
+        $cacheDuration = $this->systemConfigService->get(ConfigConstants::CACHE_DURATION) ?? self::CACHE_DURATION_DEFAULT;
 
         //only get prices where cache not expired
-        $unexpired = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
+        $unexpired = ($cacheDuration === self::CACHE_DURATION_NO_CACHE || CustomPriceApiDirector::getForceApiCall()) ? [] : array_column($this->getUnexpiredProducts($customerId, $products), "productId");  
 
         //use base decorated for unexpired prices
-        $prices = ($cacheDuration === 'PT0M' || CustomPriceApiDirector::getForceApiCall()) ? [] : $this->decorated->collect([$customerId], $unexpired);
+        $prices = ($cacheDuration === self::CACHE_DURATION_NO_CACHE || CustomPriceApiDirector::getForceApiCall()) ? [] : $this->decorated->collect([$customerId], $unexpired);
 
         //for expired/non-existing prices, get custom prices
         $expired = array_diff($products, $unexpired); 
 
-        $callApi = CustomPriceApiDirector::getSupressApiCall() ? false:($cacheDuration === 'PT0M' || !CustomPriceApiDirector::getSupressApiCall());
+        $callApi = CustomPriceApiDirector::getSupressApiCall() ? false:($cacheDuration === self::CACHE_DURATION_NO_CACHE || !CustomPriceApiDirector::getSupressApiCall());
+
         $customPrices = 
             count($expired) > 0 && $callApi
             ? 
-            $this->customPriceProvider->getCustomPrices($customerId, $expired, $parameters) 
+            $this->customPriceProvider->getCustomPrices($customerId, $expired) 
             : 
             [];
 
         //save custom prices for use later
-        if($cacheDuration !== 'PT0M' && !empty($customPrices))
+        if($cacheDuration !== self::CACHE_DURATION_NO_CACHE && !empty($customPrices))
         {
             $this->saveCustomPrices($customerId, $customPrices);
         }
 
         $merged = array_merge($prices ?? [], $customPrices ?? []);
+
         return $merged;
     }
 
@@ -111,15 +100,15 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             ->fetchAllAssociative();
     }
 
-    private function saveCustomPrices($customer, $customPrices){
+    private function saveCustomPrices(string $customerId, array $customPrices) : void{
         $payload = [];
 
         foreach($customPrices as $productId => $customPrice){
             
             $customPriceEntry = [
-                'id' => md5($customer . $productId),
+                'id' => md5($customerId . $productId),
                 'productId' => $productId,
-                'customerId' => $customer,
+                'customerId' => $customerId,
                 'price' => []
             ];
 
@@ -147,8 +136,6 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             
         }
 
-        $b = $this->customPriceRepository->upsert($payload, \Shopware\Core\Framework\Context::createDefaultContext());
-
-        return $b;
+        $this->customPriceRepository->upsert($payload, \Shopware\Core\Framework\Context::createDefaultContext());
     }
 }
