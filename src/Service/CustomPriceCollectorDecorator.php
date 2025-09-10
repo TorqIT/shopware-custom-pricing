@@ -18,6 +18,9 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
     private const CACHE_DURATION_DEFAULT = 'PT5M';
     private const CACHE_DURATION_NO_CACHE = 'PT0M'; 
 
+    //when events trigger multiple times in a single request, we only want to call the api once per product
+    private static array $forcedProducts = [];
+
     public function __construct(
         private CustomPriceCollector $decorated, 
         private readonly Connection $connection,
@@ -51,7 +54,10 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $customPrices =[];
 
         if($force){
-            $customPrices = $this->customPriceProvider->getCustomPrices($customerId, $products);
+            $notFetched = array_diff($products, array_keys(self::$forcedProducts ?? []));
+            $customPrices = count($notFetched) > 0 ? $this->customPriceProvider->getCustomPrices($customerId, $notFetched) : [];
+            self::$forcedProducts = array_merge(self::$forcedProducts ?? [], $customPrices ?? []);
+            $customPrices = self::$forcedProducts;
         } else if(count($expired) > 0 && $callApi){
             $customPrices = $this->customPriceProvider->getCustomPrices($customerId, $expired);
         } else {
