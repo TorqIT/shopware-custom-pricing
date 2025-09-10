@@ -34,6 +34,11 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
+        <service id="Torq\Shopware\CustomPricing\Service\ProductRecalculationProcessor">
+            <!-- Run with high priority BEFORE ProductCartProcessor (5000) to mark products as modified -->
+            <tag name="shopware.cart.collector" priority="6000"/>
+        </service>
+
         <service id="Torq\Shopware\CustomPricing\Storefront\Controller\AsyncPricingController" public="true">
             <argument type="service" id="sales_channel.product.repository" />
             <call method="setContainer">

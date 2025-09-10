@@ -47,13 +47,16 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
         $expired = array_diff($products, $unexpired); 
 
         $callApi = CustomPriceApiDirector::getSupressApiCall() ? false:($cacheDuration === self::CACHE_DURATION_NO_CACHE || !CustomPriceApiDirector::getSupressApiCall());
+        $force = CustomPriceApiDirector::getForceApiCall();
+        $customPrices =[];
 
-        $customPrices = 
-            count($expired) > 0 && $callApi
-            ? 
-            $this->customPriceProvider->getCustomPrices($customerId, $expired) 
-            : 
-            [];
+        if($force){
+            $customPrices = $this->customPriceProvider->getCustomPrices($customerId, $products);
+        } else if(count($expired) > 0 && $callApi){
+            $customPrices = $this->customPriceProvider->getCustomPrices($customerId, $expired);
+        } else {
+            $customPrices = [];
+        }
 
         //save custom prices for use later
         if($cacheDuration !== self::CACHE_DURATION_NO_CACHE && !empty($customPrices))
