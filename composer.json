@@ -6,7 +6,7 @@
     "license": "MIT",
     "require": {
         "shopware/core": "^6.7.0",
-        "torq/shopwarecommon": ">=2.8.2,<5.0.0 || dev-feature/6.7 || dev-feature/6.7-rc1"
+        "torq/shopwarecommon": ">=2.8.2,<5.0.0"
     },
     "extra": {
         "shopware-plugin-class": "Torq\\Shopware\\CustomPricing\\TorqCustomPricing",
