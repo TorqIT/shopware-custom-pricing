@@ -62,7 +62,8 @@ abstract class CustomPriceProvider
                 $price->getCurrencyId(),
                 $price->getNet(),
                 $price->getGross(),
-                $price->getLinked()
+                $price->getLinked(),
+                listPrice: $price->getListPrice()
             );
             $priceCollection->add($newPrice);
         }

@@ -133,7 +133,8 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
                         'currencyId' => $p->getCurrencyId(),
                         'gross' => $p->getGross(),
                         'net' => $p->getNet(),
-                        'linked' => $p->getLinked()
+                        'linked' => $p->getLinked(),
+                        'listPrice' => $p->getListPrice()
                     ];
 
                     $outerPrice['price'][] = $innerPrice;
