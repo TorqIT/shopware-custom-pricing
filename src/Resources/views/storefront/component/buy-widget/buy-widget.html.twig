@@ -1,25 +1,83 @@
 {% sw_extends '@Storefront/storefront/component/buy-widget/buy-widget.html.twig' %}
 
+{% set hidePrice = page.product.customFields.custom_product_hideprice_flag %}
+{% set hiddenPriceMsg = page.product.customFields.custom_product_hideprice_msg %}
+{% set financingPrice = page.product.customFields.custom_financing_finance_price %}
+{% set monthlyPayment = page.product.customFields.custom_financing_monthly_payment %}
+{% set financingRate = page.product.customFields.custom_financing_finance_rate %}
+{% set financeTerms = page.product.customFields.custom_financing_finance_term %}
+{% set creditCardPrice = page.product.customFields.custom_financing_credit_card_price %}
+
 {% block buy_widget_price %}
 
-    {% if pageType=='product_detail' %}
-        {% set asyncPricing = config(constant('Torq\\Shopware\\CustomPricing\\Constants\\ConfigConstants::PRODUCT_DETAIL_PAGE_ASYNC'))|boolval %}
+    {% if hidePrice %}
 
-        {% set torqAsyncProductDetailPagePricing = {
-                productId: page.product.id
-            }
-        %}
-        
-        <div class="product-detail-price-container{% if asyncPricing %} torq-async-product-detail-page-pricing-loading{% endif %}" 
-            {% if asyncPricing %} data-async-product-detail-page-pricing-plugin data-async-product-detail-page-pricing-plugin-options="{{ torqAsyncProductDetailPagePricing|json_encode }}" {% endif %}
-        >
-            {% if asyncPricing %}
-                <div class="torq-async-product-detail-page-pricing-loader loader"></div>
-            {% endif %}
-            {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
-        </div>
+        <div class="mb-3 fw-bold fs-5">{{ hiddenPriceMsg }}</div>
+
     {% else %}
-        {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+
+        {% if pageType=='product_detail' %}
+            {% set asyncPricing = config(constant('Torq\\Shopware\\CustomPricing\\Constants\\ConfigConstants::PRODUCT_DETAIL_PAGE_ASYNC'))|boolval %}
+
+            {% set torqAsyncProductDetailPagePricing = {
+                    productId: page.product.id
+                }
+            %}
+
+            <div class="tab-content">
+                <div id="pay-with-cash" 
+                    class="tab-pane fade show active product-detail-price-container{% if asyncPricing %} torq-async-product-detail-page-pricing-loading{% endif %}" 
+                    {% if asyncPricing %} data-async-product-detail-page-pricing-plugin data-async-product-detail-page-pricing-plugin-options="{{ torqAsyncProductDetailPagePricing|json_encode }}" {% endif %}
+                    role="tabpanel" 
+                    aria-labelledby="pay-with-cash-tab" 
+                >
+                    {% if asyncPricing %}
+                        <div class="torq-async-product-detail-page-pricing-loader loader"></div>
+                    {% endif %}
+
+                    {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+                </div>
+
+                {% if creditCardPrice %}
+
+                <div id="pay-with-credit" class="tab-pane fade product-detail-price-container{% if asyncPricing %} torq-async-product-detail-page-pricing-loading{% endif %}" role="tabpanel" aria-labelledby="pay-with-cash-tab" {% if asyncPricing %} data-async-product-detail-page-pricing-plugin data-async-product-detail-page-pricing-plugin-options="{{ torqAsyncProductDetailPagePricing|json_encode }}" {% endif %}>
+                    {% if asyncPricing %}
+                        <div class="torq-async-product-detail-page-pricing-loader loader"></div>
+                    {% endif %}
+
+                    <span class="pdp product-detail-price">{{ creditCardPrice ? creditCardPrice|currency(context.currency.isoCode) : '' }}</span>
+                </div>
+    
+                {% endif %}
+
+                {% if financingPrice %}           
+        
+                <div id="pay-with-financing" 
+                    class="tab-pane fade" 
+                    role="tabpanel" 
+                    aria-labelledby="pay-with-credit-tab"
+                >
+                    <span class="pdp product-detail-price">{{ monthlyPayment ? monthlyPayment|currency(context.currency.isoCode) : '' }}{{ '/' }}<span style="font-size: 1.65rem;">{{ 'productDetail.payWithFinancing.perMonth'|trans|sw_sanitize }}</span></span>
+                    <div class="product-detail-financing-info mb-3">
+                        {{ 'productDetail.productCompare.financePrice.content1'|trans }}
+                        {{ financingPrice ? financingPrice|currency(context.currency.isoCode) : '' }}
+                        {{ 'productDetail.payWithFinancing.for'|trans }}
+                        {{ financeTerms }}
+                        {{ 'productDetail.payWithFinancing.months'|trans|sw_sanitize }}
+                        {{ 'productDetail.payWithFinancing.at'|trans }}
+                        {{ financingRate }}{{ '%' }}
+                        {{ 'productDetail.payWithFinancing.apr'|trans|sw_sanitize }}
+                        <button class="bg-transparent border-0 p-0 text-blue" type="button" data-bs-toggle="offcanvas" data-bs-target="#additionalInfoOffcanvas" aria-controls="additionalInfoOffcanvas">
+                            {{ 'productDetail.payWithFinancing.learnMore.label'|trans }}
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div
+        {% else %}
+            {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+        {% endif %}
+
     {% endif %}
     
 {% endblock %}
