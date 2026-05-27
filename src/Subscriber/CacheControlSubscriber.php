@@ -28,7 +28,8 @@ class CacheControlSubscriber implements EventSubscriberInterface
         match($route) {
             'frontend.cart.offcanvas' => $this->cacheControlCheck(ConfigConstants::FORCE_OFF_CANVAS_RECALCULATE),
             'frontend.checkout.cart.page' => $this->cacheControlCheck(ConfigConstants::FORCE_CART_PREVIEW_RECALCULATE),
-            'frontend.checkout.confirm.page' => $this->cacheControlCheck(ConfigConstants::FORCE_CHECKOUT_CONFIRM_RECALCULATE),
+            'frontend.checkout.confirm.page',
+            'frontend.checkout.finish.order' => $this->cacheControlCheck(ConfigConstants::FORCE_CHECKOUT_CONFIRM_RECALCULATE),
             default => null
         };
     }
