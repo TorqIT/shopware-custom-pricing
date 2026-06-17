@@ -4,6 +4,7 @@ namespace Torq\Shopware\CustomPricing\Service;
 
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Shopware\Commercial\CustomPricing\Domain\CustomPriceCollector;
 use Shopware\Commercial\CustomPricing\Entity\CustomPrice\CustomPriceDefinition;
 use Shopware\Core\Framework\Uuid\Uuid;
@@ -146,6 +147,9 @@ class CustomPriceCollectorDecorator extends CustomPriceCollector
             
         }
 
-        $this->customPriceRepository->upsert($payload, \Shopware\Core\Framework\Context::createDefaultContext());
+        try {
+            $this->customPriceRepository->upsert($payload, \Shopware\Core\Framework\Context::createDefaultContext());
+        } catch (UniqueConstraintViolationException) {
+        }
     }
 }
