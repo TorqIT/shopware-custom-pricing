@@ -11,6 +11,17 @@ use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 
 class TorqCustomPricing extends Plugin
 {
+    /**
+     * This plugin lives in custom/plugins but is deliberately required in the root composer.json
+     * via a path repository. Returning true keeps Shopware on the "composer require" code path,
+     * which no-ops when the installed version already matches, instead of the "composer remove"
+     * path that Shopware 6.6.10.x added for custom-directory plugins.
+     */
+    public function executeComposerCommands(): bool
+    {
+        return true;
+    }
+
     public function install(InstallContext $installContext): void
     {
         // Do stuff such as creating a new payment method
