@@ -16,10 +16,10 @@
             {% if asyncPricing %}
                 <div class="torq-async-product-detail-page-pricing-loader loader"></div>
             {% endif %}
-            {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+            {% sw_include '@Storefront/storefront/component/buy-widget/buy-widget-price.html.twig' %}
         </div>
     {% else %}
-        {% sw_include '@Storefront/storefront/page/product-detail/buy-widget-price.html.twig' %}
+        {% sw_include '@Storefront/storefront/component/buy-widget/buy-widget-price.html.twig' %}
     {% endif %}
     
 {% endblock %}
