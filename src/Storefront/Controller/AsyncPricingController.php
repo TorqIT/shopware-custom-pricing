@@ -1,8 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Torq\Shopware\CustomPricing\Storefront\Controller;
 
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
@@ -22,20 +23,34 @@ class AsyncPricingController extends StorefrontController
         name: 'torq.custom-pricing.get-price',
         methods: ['GET'],
         defaults: ['XmlHttpRequest' => true]
-    )]  
+    )]
     public function getPrice(Request $request, SalesChannelContext $context): Response
     {
-        $productId = $request->get('productId');
-        $criteria = new Criteria([$productId]);
-        
-        /** @var SalesChannelProductEntity $parent */
-        $product = $this->salesChannelProductRepository->search($criteria, $context)->first();
+        $productId = $request->query->getString('productId');
+        if (!Uuid::isValid($productId)) {
+            return $this->emptyPrice(Response::HTTP_BAD_REQUEST);
+        }
 
-        $response = [];
-        $response['price'] = $this->renderView("@TorqCustomPricing/async-pricing/basic-price.html.twig",[
-            'product' => $product
+        $product = $this->salesChannelProductRepository->search(new Criteria([$productId]), $context)->first();
+
+        // A deleted or hidden product is still requested by cached pages and bookmarks.
+        if ($product === null) {
+            return $this->emptyPrice(Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->json([
+            'price' => $this->renderView('@TorqCustomPricing/async-pricing/basic-price.html.twig', [
+                'product' => $product,
+            ]),
         ]);
+    }
 
-        return $this->json($response);
+    /**
+     * The storefront plugin parses every response as JSON and writes `price`
+     * into the page, so failures still answer with an empty price.
+     */
+    private function emptyPrice(int $status): Response
+    {
+        return $this->json(['price' => ''], $status);
     }
 }
